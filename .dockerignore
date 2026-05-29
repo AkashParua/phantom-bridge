@@ -1,0 +1,21 @@
+# Never ship secrets or local state into the image
+.env
+.env.*
+data/
+
+# Local dev cruft
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.hf-cache/
+
+# Repo metadata not needed at build
+.git/
+.gitignore
+docs/
+README.md
