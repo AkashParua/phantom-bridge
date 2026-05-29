@@ -1,0 +1,17 @@
+[
+  {
+    "signal": "Earnings & results",
+    "query": "{company} quarterly earnings results revenue net profit financial report",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company} for an institutional investor. [INCLUDE]: Prioritize reporting on {company}'s own earnings releases, quarterly/annual results, revenue and profit figures, and earnings-call coverage, published as recently as possible. [DEPTH]: Focus on {company}'s reported numbers, beats/misses, and management commentary. [EXCLUDE]: Strictly exclude anything not specifically about {company} — sector round-ups that only mention it in passing, generic 'how to read earnings' explainers, aggregator/list pages, and the earnings of other companies that merely share keywords."
+  },
+  {
+    "signal": "Guidance & profit warnings",
+    "query": "{company} guidance outlook forecast profit warning raised cut full year",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s forward guidance, outlook changes, profit warnings, and analyst-relevant forecast revisions, published recently. [DEPTH]: Focus on the direction and magnitude of {company}'s guidance changes and the stated reasons. [EXCLUDE]: Strictly exclude content not about {company} itself: macro/sector forecasts, generic investing education, aggregator pages, and other companies' guidance."
+  },
+  {
+    "signal": "Revenue & demand trends",
+    "query": "{company} sales revenue demand growth decline market share volumes",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize reporting on {company}'s sales/revenue trajectory, demand shifts, volumes, and market-share moves, published recently. [DEPTH]: Focus on direction of {company}'s top-line and the drivers behind it. [EXCLUDE]: Strictly exclude anything not specifically about {company}: whole-industry demand pieces, generic market-size reports, aggregator pages, and other firms' results."
+  }
+]

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phantom-bridge"
+version = "0.1.0"
+description = "Hyper-local supply-chain disruption intelligence scraper"
+requires-python = ">=3.10"
+dependencies = [
+    "brightdata-sdk",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "transformers",
+    "torch",
+    "streamlit",
+    "pandas",
+]
+
+[project.scripts]
+phantom-bridge = "phantom_bridge.cli:main"
+phantom-bridge-dashboard = "phantom_bridge.dashboard.launcher:launch"
+phantom-bridge-watch = "phantom_bridge.watcher:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+phantom_bridge = ["prompts/*.json"]

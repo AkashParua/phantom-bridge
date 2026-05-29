@@ -1,0 +1,17 @@
+[
+  {
+    "signal": "Analyst ratings & price targets",
+    "query": "{company} analyst rating upgrade downgrade price target initiated coverage",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking sell-side views specifically on {company}. [INCLUDE]: Prioritize analyst rating changes, price-target revisions, and coverage initiations on {company}, published recently. [DEPTH]: Focus on the broker, the new rating/target on {company}, and the rationale. [EXCLUDE]: Strictly exclude ratings on other companies, generic 'what is an analyst rating' content, aggregator/screener list pages, and keyword-only matches."
+  },
+  {
+    "signal": "Investor sentiment & stock moves",
+    "query": "{company} stock shares surge plunge rally selloff investors market reaction",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking trading and sentiment specifically on {company}. [INCLUDE]: Prioritize notable moves in {company}'s stock and the investor reaction/narrative behind them, published recently. [DEPTH]: Focus on the size of the move, the catalyst, and sentiment toward {company}. [EXCLUDE]: Strictly exclude broad index/market commentary, other tickers' moves, generic trading-education content, aggregator/quote pages, and keyword-only matches."
+  },
+  {
+    "signal": "ESG, controversy & reputation",
+    "query": "{company} ESG sustainability controversy scandal environmental backlash reputation",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking reputational and ESG news specifically about {company}. [INCLUDE]: Prioritize {company}'s ESG actions, sustainability commitments, controversies, and reputational events, published recently. [DEPTH]: Focus on the specific {company} issue and its stakeholder/financial implications. [EXCLUDE]: Strictly exclude generic ESG-framework/ratings-methodology pages, controversies at other companies, advocacy content not naming {company}, and aggregator/list pages."
+  }
+]

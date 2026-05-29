@@ -1,0 +1,17 @@
+[
+  {
+    "signal": "Product launches & recalls",
+    "query": "{company} product launch new release recall defect rollout",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s product launches, major releases, and recalls/defects, published recently. [DEPTH]: Focus on the specific {company} product, scale, and commercial/reputational impact. [EXCLUDE]: Strictly exclude other companies' products, generic product-review/buying-guide content, aggregator/list pages, and keyword-only matches."
+  },
+  {
+    "signal": "Contracts, deals & partnerships",
+    "query": "{company} contract deal partnership agreement joint venture supply award",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize contracts, supply agreements, partnerships, and joint ventures that {company} has signed or won, published recently. [DEPTH]: Focus on the counterparty, value, and strategic significance for {company}. [EXCLUDE]: Strictly exclude deals not involving {company}, generic 'how to win contracts' content, procurement-portal/tender-list pages unrelated to {company}, and aggregator pages."
+  },
+  {
+    "signal": "Expansion & investment",
+    "query": "{company} expansion new plant investment facility groundbreaking capacity",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s capacity expansions, new facilities, and capital investments, published recently. [DEPTH]: Focus on location, size of investment, and the growth implication for {company}. [EXCLUDE]: Strictly exclude expansions by other companies, generic economic-development/region-promotion pages, aggregator/list pages, and keyword-only matches."
+  }
+]

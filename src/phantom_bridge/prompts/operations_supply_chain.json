@@ -1,0 +1,22 @@
+[
+  {
+    "signal": "Production & facility disruptions",
+    "query": "{company} plant refinery factory shutdown halt production disruption suspended",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material operational news specifically about {company}. [INCLUDE]: Prioritize disruptions at {company}'s own plants, refineries, or facilities — shutdowns, halts, suspended output — published recently. [DEPTH]: Focus on which {company} site, the cause, and the production/financial impact. [EXCLUDE]: Strictly exclude disruptions at other companies' or unrelated facilities, generic industry-capacity pieces, aggregator pages, and events that merely share keywords."
+  },
+  {
+    "signal": "Logistics, ports & shipping",
+    "query": "{company} port shipping logistics export import delay congestion freight",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking supply-chain news specifically about {company}. [INCLUDE]: Prioritize logistics events that affect {company}'s inbound/outbound flow — port congestion, shipping/freight delays, export/import disruptions tied to {company} — published recently. [DEPTH]: Focus on the node involved and the impact on {company}'s shipments. [EXCLUDE]: Strictly exclude generic logistics-industry or port-status pages not tied to {company}, other companies' shipments, aggregator pages, and keyword-only matches."
+  },
+  {
+    "signal": "Labor & workforce",
+    "query": "{company} strike workers union labor dispute walkout layoffs plant",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking labor news specifically about {company}. [INCLUDE]: Prioritize industrial action and workforce disruption at {company} — strikes, walkouts, union disputes, mass layoffs at its sites — published recently. [DEPTH]: Focus on the affected {company} site, workers involved, and operational impact. [EXCLUDE]: Strictly exclude strikes/labor action at other employers, national labor-trend pieces, union/portal how-to pages, aggregator/list pages, and keyword-only matches."
+  },
+  {
+    "signal": "Accidents, safety & outages",
+    "query": "{company} fire explosion accident outage incident spill leak damage",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking incident news specifically about {company}. [INCLUDE]: Prioritize fires, explosions, accidents, spills, and outages at {company}'s own facilities, published recently. [DEPTH]: Focus on which {company} site, severity, and operational/financial consequences. [EXCLUDE]: Strictly exclude disasters, accidents, or emergencies NOT involving {company} (generic emergency-management/government pages, incidents at other organizations or unrelated locations), safety how-to/regulation pages, and aggregator/list pages."
+  }
+]

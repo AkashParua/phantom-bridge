@@ -1,0 +1,4 @@
+# Runtime dependencies (also declared in pyproject.toml).
+# For development, prefer:  pip install -e .
+brightdata-sdk
+python-dotenv

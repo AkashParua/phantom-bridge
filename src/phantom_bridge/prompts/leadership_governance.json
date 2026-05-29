@@ -1,0 +1,12 @@
+[
+  {
+    "signal": "Executive & board changes",
+    "query": "{company} CEO CFO executive appointment resignation board director steps down",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize reporting on {company}'s C-suite and board appointments, resignations, and succession, published recently. [DEPTH]: Focus on who is leaving/joining at {company}, timing, and the governance/strategy implication. [EXCLUDE]: Strictly exclude executive moves at other companies, generic leadership/career advice, aggregator pages, and unrelated namesakes."
+  },
+  {
+    "signal": "Governance & insider activity",
+    "query": "{company} insider trading shareholder activist proxy governance board dispute",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s insider transactions, activist-investor campaigns, proxy fights, and governance disputes, published recently. [DEPTH]: Focus on who is acting, their stake/intent, and the impact on {company}. [EXCLUDE]: Strictly exclude generic governance explainers, regulator how-to pages, aggregator/list pages, and activity at other companies."
+  }
+]

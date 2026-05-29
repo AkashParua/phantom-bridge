@@ -1,0 +1,17 @@
+[
+  {
+    "signal": "Lawsuits & litigation",
+    "query": "{company} lawsuit legal claim court case settlement damages sued",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize litigation in which {company} is a named party — suits filed, rulings, settlements, and damages — published recently. [DEPTH]: Focus on the claim, {company}'s exposure, and the financial/operational stakes. [EXCLUDE]: Strictly exclude cases {company} is not party to, generic legal explainers, law-firm marketing, aggregator/list pages, and similarly named entities."
+  },
+  {
+    "signal": "Regulatory actions & fines",
+    "query": "{company} regulator fine penalty sanction investigation antitrust probe",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize regulator and government actions directed at {company} — fines, penalties, sanctions, antitrust or other probes — published recently. [DEPTH]: Focus on the regulator, the alleged conduct, and the penalty/risk to {company}. [EXCLUDE]: Strictly exclude actions against other companies, generic regulatory-overview pages, agency how-to/portal pages, aggregator/list pages, and keyword-only matches."
+  },
+  {
+    "signal": "Approvals & compliance",
+    "query": "{company} regulatory approval license permit compliance ruling clearance",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s regulatory approvals, licenses, clearances, and compliance milestones (or denials), published recently. [DEPTH]: Focus on what was approved/denied for {company} and the business impact. [EXCLUDE]: Strictly exclude generic permit-procedure/government portal pages, approvals for other companies, aggregator/list pages, and template documents."
+  }
+]

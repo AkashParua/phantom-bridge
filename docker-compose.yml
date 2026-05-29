@@ -1,0 +1,31 @@
+# Brings up the whole demo with one command:
+#   cp .env.example .env   # then put your real BRIGHT_DATA_API_KEY in it
+#   docker compose up --build
+#
+# - dashboard : Streamlit UI on http://localhost:8501
+# - watcher   : background daemon that scrapes/scores the watchlist and emails reports
+# Both share the same image, the same .env (for the API key), and the same
+# ./data volume (so the watcher sees the watchlist + SMTP settings the dashboard writes).
+
+services:
+  dashboard:
+    build: .
+    image: phantom-bridge:latest
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  watcher:
+    image: phantom-bridge:latest      # reuses the image built by `dashboard`
+    command: phantom-bridge-watch
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - dashboard

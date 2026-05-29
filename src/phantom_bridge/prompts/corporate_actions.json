@@ -1,0 +1,17 @@
+[
+  {
+    "signal": "M&A & divestitures",
+    "query": "{company} acquisition merger takeover divestiture sells stake deal",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize reporting where {company} is a party to an acquisition, merger, takeover, asset sale, or stake change, published recently. [DEPTH]: Focus on the deal terms, counterparties, and strategic rationale for {company}. [EXCLUDE]: Strictly exclude deals {company} is not party to, generic M&A-trend articles, advisory-firm marketing, aggregator/list pages, and look-alike company names."
+  },
+  {
+    "signal": "Capital, dividends & buybacks",
+    "query": "{company} dividend share buyback capital raise bond issuance debt financing",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize {company}'s dividend declarations, buyback programs, equity/debt raises, and financing actions, published recently. [DEPTH]: Focus on amounts, terms, and balance-sheet implications for {company}. [EXCLUDE]: Strictly exclude generic dividend/investing guides, market-wide rate commentary, aggregator pages, and other issuers' capital actions."
+  },
+  {
+    "signal": "Restructuring & layoffs",
+    "query": "{company} restructuring layoffs job cuts cost cutting reorganization",
+    "intent": "[PERSONA/CONTEXT]: I am an equity research analyst tracking material news specifically about {company}. [INCLUDE]: Prioritize reporting on {company}'s restructuring, layoffs, cost programs, and reorganizations, published recently. [DEPTH]: Focus on scale (headcount, cost savings), affected units, and the rationale for {company}. [EXCLUDE]: Strictly exclude generic layoff-tracker/list pages, national labor-market trend pieces, aggregator pages, and layoffs at other companies."
+  }
+]
