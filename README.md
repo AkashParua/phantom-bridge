@@ -1,4 +1,4 @@
-# phantom-bridge
+# Real-time company intelligence — read a company's signals before the market does.
 
 > **Real-time company intelligence — read a company's signals before the market does.**
 
