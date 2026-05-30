@@ -1,7 +1,7 @@
 """Minimalistic financial-news sentiment dashboard (Streamlit).
 
 Three tabs:
-  * Analyze   — score one company's disruption news (hybrid cache + scrape).
+  * Analyze   — score one company's news (hybrid cache + scrape).
   * Watchlist — manage the companies the watcher daemon monitors; run on demand.
   * Settings  — paste API keys, SMTP config, recipient email, and the interval.
 
@@ -225,7 +225,7 @@ def render_settings(conn) -> None:
 
 
 def main() -> None:
-    st.title("phantom-bridge — disruption news sentiment")
+    st.title("phantom-bridge — company news sentiment")
     conn = _conn()
     analyze, watch, settings = st.tabs(["Analyze", "Watchlist", "Settings"])
     with analyze:
