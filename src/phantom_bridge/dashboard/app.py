@@ -13,6 +13,7 @@ Run:
 
 import json
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 import pandas as pd
 import streamlit as st
@@ -33,11 +34,13 @@ def _conn():
 
 
 def signal_selector(key_prefix: str, saved: dict | None = None) -> dict:
-    """Per-signal include checkbox + a results slider, grouped by category.
+    """Category checkbox that reveals its per-signal controls when ticked.
 
-    Returns ``{signal: num_results}`` for the checked signals. ``saved=None`` ->
-    all signals checked at 5 by default; a dict -> check the listed signals and
-    seed their sliders from it.
+    Selecting a category activates (reveals) its signals — each with an include
+    checkbox and a results slider — instead of a click-to-open dropdown. Returns
+    ``{signal: num_results}`` for the checked signals of *selected* categories.
+    ``saved=None`` -> categories off by default; a dict -> categories holding any
+    saved signal start on, with their sliders seeded. (Render OUTSIDE st.form.)
     """
     cats: dict[str, list] = {}
     for p in load_prompts():
@@ -45,16 +48,26 @@ def signal_selector(key_prefix: str, saved: dict | None = None) -> dict:
 
     selection: dict[str, int] = {}
     for cat, sigs in cats.items():
-        n_on = sum(1 for p in sigs if saved is None or p["signal"] in saved)
-        with st.expander(f"{cat.replace('_', ' ').title()}  ({n_on}/{len(sigs)})", expanded=False):
+        cat_key = f"{key_prefix}_cat::{cat}"
+        if cat_key not in st.session_state:
+            st.session_state[cat_key] = bool(saved) and any(p["signal"] in saved for p in sigs)
+
+        n_on = sum(1 for p in sigs if st.session_state.get(f"{key_prefix}_on::{p['signal']}", True))
+        cat_on = st.checkbox(f"{cat.replace('_', ' ').title()}  ({n_on}/{len(sigs)})", key=cat_key)
+        if not cat_on:
+            continue
+
+        with st.container(border=True):
             for p in sigs:
                 sig = p["signal"]
-                on_default = True if saved is None else (sig in saved)
-                n_default = int(saved[sig]) if (saved and sig in saved) else 5
+                ck, nk = f"{key_prefix}_on::{sig}", f"{key_prefix}_n::{sig}"
+                if ck not in st.session_state:
+                    st.session_state[ck] = True if saved is None else (sig in saved)
+                if nk not in st.session_state:
+                    st.session_state[nk] = int(saved[sig]) if (saved and sig in saved) else 5
                 c1, c2 = st.columns([3, 2])
-                on = c1.checkbox(sig, value=on_default, key=f"{key_prefix}_on::{sig}")
-                n = c2.slider("results", 1, 25, n_default, key=f"{key_prefix}_n::{sig}",
-                              label_visibility="collapsed")
+                on = c1.checkbox(sig, key=ck)
+                n = c2.slider("results", 1, 25, key=nk, label_visibility="collapsed")
                 if on:
                     selection[sig] = n
     return selection
@@ -85,21 +98,53 @@ def _to_frame(rows) -> pd.DataFrame:
     return df
 
 
+_SENT_EMOJI = {"negative": "🔴", "positive": "🟢", "neutral": "⚪"}
+
+
+def render_tiles(df: pd.DataFrame, per_row: int = 4) -> None:
+    """Render results as a grid of clickable preview tiles, `per_row` per row."""
+    records = df.to_dict("records")
+    for start in range(0, len(records), per_row):
+        cols = st.columns(per_row)
+        for col, r in zip(cols, records[start:start + per_row]):
+            with col.container(border=True, height=240):
+                link = r.get("link") or ""
+                title = (r.get("title") or link or "untitled")[:110]
+                st.markdown(f"[**{title}**]({link})")
+
+                label = r.get("sentiment_label")
+                score = r.get("sentiment")
+                if label:
+                    badge = f"{_SENT_EMOJI.get(label, '')} {label}"
+                    if score is not None:
+                        badge += f" ({score:+.2f})"
+                    st.caption(badge)
+
+                domain = urlparse(link).netloc.replace("www.", "") if link else ""
+                date = r.get("published_date")
+                meta = " · ".join(x for x in (r.get("signal"), domain, str(date) if date else "") if x)
+                if meta:
+                    st.caption(meta)
+
+                desc = (r.get("description") or "").strip()
+                if desc:
+                    st.write(desc[:130] + ("…" if len(desc) > 130 else ""))
+
+
 # --- Analyze tab --------------------------------------------------------------
 
 def render_analyze(conn) -> None:
-    with st.form("query"):
-        c1, c2, c3 = st.columns(3)
-        company = c1.text_input("Company", "ARAMCO")
-        ticker = c2.text_input("Ticker", "")
-        exchange = c3.text_input("Exchange", "")
-        st.markdown("**Signals to search** — pick signals and set results per signal:")
-        signal_results = signal_selector("an")
-        force = st.checkbox("Force re-scrape (calls Bright Data — slow, uses API credits)")
-        submitted = st.form_submit_button("Analyze")
+    c1, c2, c3 = st.columns(3)
+    company = c1.text_input("Company", "ARAMCO", key="an_company")
+    ticker = c2.text_input("Ticker", "", key="an_ticker")
+    exchange = c3.text_input("Exchange", "", key="an_exchange")
+    st.markdown("**Signals to search** — tick a category to reveal its signals:")
+    signal_results = signal_selector("an")
+    force = st.checkbox("Force re-scrape (calls Bright Data — slow, uses API credits)", key="an_force")
+    submitted = st.button("Analyze", type="primary")
 
-    # Scrape/score only on submit; remember the selection so date-filter reruns
-    # (which happen outside the form) keep showing results.
+    # Scrape/score only on submit; remember the selection so later reruns
+    # (date filter, etc.) keep showing results.
     if submitted:
         if not company.strip():
             st.warning("Company is required.")
@@ -157,7 +202,6 @@ def render_analyze(conn) -> None:
     header = " · ".join(p for p in (company, sel["ticker"], sel["exchange"]) if p)
     st.subheader(header)
 
-    # Date filter lives OUTSIDE the form, so toggling it takes effect immediately.
     use_dates = st.checkbox("Filter by publish date")
     start = end = None
     if use_dates:
@@ -184,12 +228,16 @@ def render_analyze(conn) -> None:
     if not scored.empty:
         st.line_chart(scored.groupby("published_date")["sentiment"].mean(), height=220)
 
-    cols = ["published_date", "sentiment", "sentiment_label", "confidence",
-            "signal", "relevance_score", "title", "link"]
-    st.dataframe(
-        shown[cols].sort_values("published_date", ascending=False),
-        use_container_width=True, hide_index=True, column_config=_LINK_COL,
-    )
+    ordered = shown.sort_values("published_date", ascending=False)
+    view = st.radio("View", ["Tiles", "Table"], horizontal=True, label_visibility="collapsed")
+    if view == "Tiles":
+        render_tiles(ordered)
+    else:
+        cols = ["published_date", "sentiment", "sentiment_label", "confidence",
+                "signal", "relevance_score", "title", "link"]
+        st.dataframe(
+            ordered[cols], use_container_width=True, hide_index=True, column_config=_LINK_COL,
+        )
 
     if not undated.empty:
         with st.expander(f"Undated events ({len(undated)}) — no publish date parsed"):
@@ -246,36 +294,37 @@ def render_settings(conn) -> None:
     saved_cfg = json.loads(s["signal_config"]) if s.get("signal_config") else None
     st.caption("Stored locally in the SQLite `settings` table (plaintext, gitignored).")
 
-    with st.form("settings"):
-        st.markdown("**Bright Data**")
-        api_key = st.text_input("Bright Data API key", s.get("bright_data_api_key", ""), type="password")
+    st.markdown("**Bright Data**")
+    api_key = st.text_input("Bright Data API key", s.get("bright_data_api_key", ""),
+                            type="password", key="set_apikey")
 
-        st.markdown("**Email (SMTP)**")
-        c1, c2 = st.columns(2)
-        smtp_host = c1.text_input("SMTP host", s.get("smtp_host", ""))
-        smtp_port = c2.text_input("SMTP port", s.get("smtp_port", "587"))
-        c3, c4 = st.columns(2)
-        smtp_user = c3.text_input("SMTP username", s.get("smtp_user", ""))
-        smtp_password = c4.text_input("SMTP password / app password", s.get("smtp_password", ""), type="password")
-        c5, c6 = st.columns(2)
-        email_from = c5.text_input("From email", s.get("email_from", ""))
-        email_to = c6.text_input("Report recipient email", s.get("email_to", ""))
+    st.markdown("**Email (SMTP)**")
+    c1, c2 = st.columns(2)
+    smtp_host = c1.text_input("SMTP host", s.get("smtp_host", ""), key="set_host")
+    smtp_port = c2.text_input("SMTP port", s.get("smtp_port", "587"), key="set_port")
+    c3, c4 = st.columns(2)
+    smtp_user = c3.text_input("SMTP username", s.get("smtp_user", ""), key="set_user")
+    smtp_password = c4.text_input("SMTP password / app password", s.get("smtp_password", ""),
+                                  type="password", key="set_pass")
+    c5, c6 = st.columns(2)
+    email_from = c5.text_input("From email", s.get("email_from", ""), key="set_from")
+    email_to = c6.text_input("Report recipient email", s.get("email_to", ""), key="set_to")
 
-        st.markdown("**Schedule**")
-        interval = st.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"))
+    st.markdown("**Schedule**")
+    interval = st.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"), key="set_interval")
 
-        st.markdown("**Signals the watcher searches** — pick signals and results per signal:")
-        watch_signal_results = signal_selector("set", saved=saved_cfg)
+    st.markdown("**Signals the watcher searches** — tick a category to reveal its signals:")
+    watch_signal_results = signal_selector("set", saved=saved_cfg)
 
-        if st.form_submit_button("Save settings"):
-            for key, val in {
-                "bright_data_api_key": api_key, "smtp_host": smtp_host, "smtp_port": smtp_port,
-                "smtp_user": smtp_user, "smtp_password": smtp_password, "email_from": email_from,
-                "email_to": email_to, "watch_interval_hours": interval,
-            }.items():
-                storage.set_setting(conn, key, val.strip() or None)
-            storage.set_setting(conn, "signal_config", json.dumps(watch_signal_results))
-            st.success("Settings saved. Restart `phantom-bridge-watch` to pick up a new interval.")
+    if st.button("Save settings", type="primary"):
+        for key, val in {
+            "bright_data_api_key": api_key, "smtp_host": smtp_host, "smtp_port": smtp_port,
+            "smtp_user": smtp_user, "smtp_password": smtp_password, "email_from": email_from,
+            "email_to": email_to, "watch_interval_hours": interval,
+        }.items():
+            storage.set_setting(conn, key, val.strip() or None)
+        storage.set_setting(conn, "signal_config", json.dumps(watch_signal_results))
+        st.success("Settings saved. Restart `phantom-bridge-watch` to pick up a new interval.")
 
 
 def main() -> None:
