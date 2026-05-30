@@ -11,12 +11,14 @@ Run:
     phantom-bridge-dashboard
 """
 
+import json
 from datetime import datetime, timezone
 
 import pandas as pd
 import streamlit as st
 
 from phantom_bridge import sentiment, storage, watcher
+from phantom_bridge.prompts import load_prompts
 from phantom_bridge.scraper import run_iter
 
 st.set_page_config(page_title="phantom-bridge", layout="wide")
@@ -28,6 +30,34 @@ def _conn():
     conn = storage.connect()
     storage.init_db(conn)
     return conn
+
+
+def signal_selector(key_prefix: str, saved: dict | None = None) -> dict:
+    """Per-signal include checkbox + a results slider, grouped by category.
+
+    Returns ``{signal: num_results}`` for the checked signals. ``saved=None`` ->
+    all signals checked at 5 by default; a dict -> check the listed signals and
+    seed their sliders from it.
+    """
+    cats: dict[str, list] = {}
+    for p in load_prompts():
+        cats.setdefault(p["category"], []).append(p)
+
+    selection: dict[str, int] = {}
+    for cat, sigs in cats.items():
+        n_on = sum(1 for p in sigs if saved is None or p["signal"] in saved)
+        with st.expander(f"{cat.replace('_', ' ').title()}  ({n_on}/{len(sigs)})", expanded=False):
+            for p in sigs:
+                sig = p["signal"]
+                on_default = True if saved is None else (sig in saved)
+                n_default = int(saved[sig]) if (saved and sig in saved) else 5
+                c1, c2 = st.columns([3, 2])
+                on = c1.checkbox(sig, value=on_default, key=f"{key_prefix}_on::{sig}")
+                n = c2.slider("results", 1, 25, n_default, key=f"{key_prefix}_n::{sig}",
+                              label_visibility="collapsed")
+                if on:
+                    selection[sig] = n
+    return selection
 
 
 def _score_missing(conn, rows) -> int:
@@ -63,11 +93,8 @@ def render_analyze(conn) -> None:
         company = c1.text_input("Company", "ARAMCO")
         ticker = c2.text_input("Ticker", "")
         exchange = c3.text_input("Exchange", "")
-        results = st.slider(
-            "Results per query", min_value=1, max_value=25, value=5,
-            help="How many items Discover returns per prompt (21 prompts run per scrape). "
-                 "Only applies when a scrape actually runs (cache miss or force).",
-        )
+        st.markdown("**Signals to search** — pick signals and set results per signal:")
+        signal_results = signal_selector("an")
         force = st.checkbox("Force re-scrape (calls Bright Data — slow, uses API credits)")
         submitted = st.form_submit_button("Analyze")
 
@@ -82,12 +109,15 @@ def render_analyze(conn) -> None:
 
         # Hybrid cache + scrape: scrape only on a true miss, or when forced.
         if storage.count_company_events(conn, company) == 0 or force:
+            if not signal_results:
+                st.warning("Select at least one signal to search.")
+                return
             api_key = storage.get_setting(conn, "bright_data_api_key")
             total_new = 0
             try:
-                with st.status(f"Scraping {company} — running prompts…", expanded=True) as status:
+                with st.status(f"Scraping {company} — {len(signal_results)} signals…", expanded=True) as status:
                     bar = st.progress(0.0)
-                    for step in run_iter(company, num_results=results, country="US", api_key=api_key):
+                    for step in run_iter(company, country="US", api_key=api_key, signal_results=signal_results):
                         inserted, _ = storage.insert_events(conn, step["events"])
                         total_new += inserted
                         bar.progress(step["index"] / step["total"])
@@ -213,6 +243,7 @@ def render_watchlist(conn) -> None:
 
 def render_settings(conn) -> None:
     s = storage.get_settings(conn)
+    saved_cfg = json.loads(s["signal_config"]) if s.get("signal_config") else None
     st.caption("Stored locally in the SQLite `settings` table (plaintext, gitignored).")
 
     with st.form("settings"):
@@ -231,23 +262,20 @@ def render_settings(conn) -> None:
         email_to = c6.text_input("Report recipient email", s.get("email_to", ""))
 
         st.markdown("**Schedule**")
-        c7, c8 = st.columns(2)
-        interval = c7.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"))
-        watch_results = c8.slider(
-            "Results per query (watcher)", min_value=1, max_value=25,
-            value=int(s.get("watch_results", "5") or 5),
-            help="How many items Discover returns per prompt during each watcher cycle.",
-        )
+        interval = st.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"))
+
+        st.markdown("**Signals the watcher searches** — pick signals and results per signal:")
+        watch_signal_results = signal_selector("set", saved=saved_cfg)
 
         if st.form_submit_button("Save settings"):
             for key, val in {
                 "bright_data_api_key": api_key, "smtp_host": smtp_host, "smtp_port": smtp_port,
                 "smtp_user": smtp_user, "smtp_password": smtp_password, "email_from": email_from,
                 "email_to": email_to, "watch_interval_hours": interval,
-                "watch_results": str(watch_results),
             }.items():
                 storage.set_setting(conn, key, val.strip() or None)
-            st.success("Settings saved. Restart `phantom-bridge-watch` to pick up new values.")
+            storage.set_setting(conn, "signal_config", json.dumps(watch_signal_results))
+            st.success("Settings saved. Restart `phantom-bridge-watch` to pick up a new interval.")
 
 
 def main() -> None:

@@ -11,6 +11,7 @@ Configuration (Bright Data key, SMTP, recipient, interval) is read from the
 
 import argparse
 import asyncio
+import json
 import time
 from datetime import datetime, timezone
 
@@ -22,11 +23,26 @@ def _resolve_api_key(conn) -> str | None:
     return storage.get_setting(conn, "bright_data_api_key") or config.get_api_key()
 
 
+def _signal_config(conn) -> dict | None:
+    """Per-signal selection saved by the dashboard, or None (= all signals)."""
+    raw = storage.get_setting(conn, "signal_config")
+    if not raw:
+        return None
+    try:
+        cfg = json.loads(raw)
+    except (ValueError, TypeError):
+        return None
+    return cfg if isinstance(cfg, dict) and cfg else None
+
+
 def _process_company(conn, company: str) -> list:
     """Scrape fresh events for a company, score any unscored, return scored rows."""
     api_key = _resolve_api_key(conn)
     num_results = int(storage.get_setting(conn, "watch_results", "5") or 5)
-    events = asyncio.run(scrape_run(company, num_results=num_results, country="US", api_key=api_key))
+    events = asyncio.run(scrape_run(
+        company, num_results=num_results, country="US", api_key=api_key,
+        signal_results=_signal_config(conn),
+    ))
     inserted, _ = storage.insert_events(conn, events)
     print(f"[watch]   {company}: scraped, {inserted} new events")
 
