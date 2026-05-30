@@ -4,6 +4,7 @@ Substitutes a company name into each prompt, runs Discover for every signal,
 and normalizes the results into event records.
 """
 
+import asyncio
 from datetime import datetime, timezone
 
 from brightdata import BrightDataClient
@@ -63,3 +64,50 @@ async def run(company: str, num_results: int, country: str, api_key: str | None 
 
     print(f"Built {len(events)} events.")
     return events
+
+
+def run_iter(company: str, num_results: int, country: str, api_key: str | None = None):
+    """Sync generator that yields one result per prompt as its Discover call completes.
+
+    Lets a UI render incrementally (show each request as it finishes, links clickable
+    right away) instead of waiting for all prompts. Each yielded dict has:
+    ``{index, total, category, signal, events, error}``.
+    """
+    api_key = api_key or get_api_key()
+    if not api_key:
+        raise RuntimeError(
+            "No Bright Data API key. Set it in the dashboard Settings tab or in .env."
+        )
+
+    prompts = load_prompts()
+    scraped_at = datetime.now(timezone.utc).isoformat()
+
+    async def _fetch(p: dict, query: str):
+        async with BrightDataClient(token=api_key, auto_create_zones=False) as client:
+            result = await client.discover(
+                include_content=True,
+                query=query,
+                intent=p["intent"].format(company=company),
+                country=country,
+                num_results=num_results,
+                filter_keywords=[company],
+            )
+        return result.data or []
+
+    for i, p in enumerate(prompts, 1):
+        query = p["query"].format(company=company)
+        events: list[dict] = []
+        error = None
+        try:
+            rows = asyncio.run(_fetch(p, query))
+            events = [
+                build_event(r, company=company, category=p["category"],
+                            signal=p["signal"], query=query, scraped_at=scraped_at)
+                for r in rows
+            ]
+        except Exception as exc:  # surface per-prompt, keep going
+            error = f"{type(exc).__name__}: {exc}"
+        yield {
+            "index": i, "total": len(prompts), "category": p["category"],
+            "signal": p["signal"], "events": events, "error": error,
+        }

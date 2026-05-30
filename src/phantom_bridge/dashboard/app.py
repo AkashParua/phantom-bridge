@@ -11,14 +11,13 @@ Run:
     phantom-bridge-dashboard
 """
 
-import asyncio
 from datetime import datetime, timezone
 
 import pandas as pd
 import streamlit as st
 
 from phantom_bridge import sentiment, storage, watcher
-from phantom_bridge.scraper import run as scrape_run
+from phantom_bridge.scraper import run_iter
 
 st.set_page_config(page_title="phantom-bridge", layout="wide")
 
@@ -84,14 +83,29 @@ def render_analyze(conn) -> None:
         # Hybrid cache + scrape: scrape only on a true miss, or when forced.
         if storage.count_company_events(conn, company) == 0 or force:
             api_key = storage.get_setting(conn, "bright_data_api_key")
-            with st.spinner("Scraping Bright Data — this can take a few minutes…"):
-                try:
-                    events = asyncio.run(scrape_run(company, num_results=results, country="US", api_key=api_key))
-                except Exception as exc:
-                    st.error(f"Scrape failed: {exc}")
-                    return
-                inserted, _ = storage.insert_events(conn, events)
-            st.success(f"Scraped and stored {inserted} new events.")
+            total_new = 0
+            try:
+                with st.status(f"Scraping {company} — running prompts…", expanded=True) as status:
+                    bar = st.progress(0.0)
+                    for step in run_iter(company, num_results=results, country="US", api_key=api_key):
+                        inserted, _ = storage.insert_events(conn, step["events"])
+                        total_new += inserted
+                        bar.progress(step["index"] / step["total"])
+                        head = f"**[{step['index']}/{step['total']}] {step['category']} — {step['signal']}**"
+                        if step["error"]:
+                            status.markdown(f"{head} — ⚠️ {step['error']}")
+                        elif step["events"]:
+                            links = "\n".join(
+                                f"- [{(e['title'] or e['link'])[:90]}]({e['link']})"
+                                for e in step["events"] if e.get("link")
+                            )
+                            status.markdown(f"{head} — {len(step['events'])} results\n{links}")
+                        else:
+                            status.markdown(f"{head} — no results")
+                    status.update(label=f"Scrape complete — {total_new} new events", state="complete")
+            except Exception as exc:
+                st.error(f"Scrape failed: {exc}")
+                return
 
         _score_missing(conn, storage.fetch_scored_events(conn, company))
         st.session_state.analyzed = {
