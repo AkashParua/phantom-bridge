@@ -25,7 +25,8 @@ def _resolve_api_key(conn) -> str | None:
 def _process_company(conn, company: str) -> list:
     """Scrape fresh events for a company, score any unscored, return scored rows."""
     api_key = _resolve_api_key(conn)
-    events = asyncio.run(scrape_run(company, num_results=5, country="US", api_key=api_key))
+    num_results = int(storage.get_setting(conn, "watch_results", "5") or 5)
+    events = asyncio.run(scrape_run(company, num_results=num_results, country="US", api_key=api_key))
     inserted, _ = storage.insert_events(conn, events)
     print(f"[watch]   {company}: scraped, {inserted} new events")
 

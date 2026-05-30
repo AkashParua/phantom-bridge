@@ -64,6 +64,11 @@ def render_analyze(conn) -> None:
         company = c1.text_input("Company", "ARAMCO")
         ticker = c2.text_input("Ticker", "")
         exchange = c3.text_input("Exchange", "")
+        results = st.slider(
+            "Results per query", min_value=1, max_value=25, value=5,
+            help="How many items Discover returns per prompt (21 prompts run per scrape). "
+                 "Only applies when a scrape actually runs (cache miss or force).",
+        )
         force = st.checkbox("Force re-scrape (calls Bright Data — slow, uses API credits)")
         submitted = st.form_submit_button("Analyze")
 
@@ -81,7 +86,7 @@ def render_analyze(conn) -> None:
             api_key = storage.get_setting(conn, "bright_data_api_key")
             with st.spinner("Scraping Bright Data — this can take a few minutes…"):
                 try:
-                    events = asyncio.run(scrape_run(company, num_results=5, country="US", api_key=api_key))
+                    events = asyncio.run(scrape_run(company, num_results=results, country="US", api_key=api_key))
                 except Exception as exc:
                     st.error(f"Scrape failed: {exc}")
                     return
@@ -212,16 +217,23 @@ def render_settings(conn) -> None:
         email_to = c6.text_input("Report recipient email", s.get("email_to", ""))
 
         st.markdown("**Schedule**")
-        interval = st.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"))
+        c7, c8 = st.columns(2)
+        interval = c7.text_input("Watch interval (hours)", s.get("watch_interval_hours", "24"))
+        watch_results = c8.slider(
+            "Results per query (watcher)", min_value=1, max_value=25,
+            value=int(s.get("watch_results", "5") or 5),
+            help="How many items Discover returns per prompt during each watcher cycle.",
+        )
 
         if st.form_submit_button("Save settings"):
             for key, val in {
                 "bright_data_api_key": api_key, "smtp_host": smtp_host, "smtp_port": smtp_port,
                 "smtp_user": smtp_user, "smtp_password": smtp_password, "email_from": email_from,
                 "email_to": email_to, "watch_interval_hours": interval,
+                "watch_results": str(watch_results),
             }.items():
                 storage.set_setting(conn, key, val.strip() or None)
-            st.success("Settings saved. Restart `phantom-bridge-watch` to pick up a new interval.")
+            st.success("Settings saved. Restart `phantom-bridge-watch` to pick up new values.")
 
 
 def main() -> None:
