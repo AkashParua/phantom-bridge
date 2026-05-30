@@ -1,4 +1,15 @@
-# Runtime dependencies (also declared in pyproject.toml).
-# For development, prefer:  pip install -e .
+# Full runtime dependency set — used by Streamlit Community Cloud (and anyone
+# running `pip install -r requirements.txt`).
+#
+# For local dev / Docker, the pyproject extras are equivalent:
+#     pip install -e '.[dashboard]'
+
+# CPU-only PyTorch (the default CUDA build is ~2 GB and can exceed Cloud build limits)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+
+transformers
+pandas
+streamlit
 brightdata-sdk
 python-dotenv

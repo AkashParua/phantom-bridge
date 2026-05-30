@@ -12,15 +12,21 @@ Run:
 """
 
 import json
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pandas as pd
 import streamlit as st
 
-from phantom_bridge import sentiment, storage, watcher
-from phantom_bridge.prompts import load_prompts
-from phantom_bridge.scraper import run_iter
+# Ensure the src/ dir is importable when run as a bare script (e.g. Streamlit
+# Community Cloud), where the package may not be pip-installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from phantom_bridge import sentiment, storage, watcher  # noqa: E402
+from phantom_bridge.prompts import load_prompts  # noqa: E402
+from phantom_bridge.scraper import run_iter  # noqa: E402
 
 st.set_page_config(page_title="phantom-bridge", layout="wide")
 
