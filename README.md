@@ -1,14 +1,25 @@
 # phantom-bridge
 
-**Alternative-data company intelligence.** Scrape holistic, real-time news about a public company from across the web, score each item for financial sentiment with a local model, and surface it in a minimal dashboard — with scheduled email reports.
+> **Real-time company intelligence — read a company's signals before the market does.**
 
-## Why
+**phantom-bridge** turns the open web's scattered, real-time news about a public company into a clean, sentiment-scored signal feed. Type a company name; it pulls fresh coverage across seven dimensions — financials, legal/regulatory, leadership, operations & supply chain, deals, products, and reputation — ties every story back to that company, scores each one's financial sentiment with a **local** model, and surfaces it in a live dashboard with scheduled email digests for your watchlist.
 
-In institutional finance, private equity, and corporate procurement, decision-makers are locked in a constant battle for *alpha* — an informational edge that lets them act before the broader market reacts. Traditional analysis leans on quarterly earnings, official filings, and structured market feeds. That data is reliable but **retrospective**: it tells you what happened months ago, not what is happening now.
+`Python` · `Streamlit` · `Bright Data Discover` · `distilRoBERTa` · `SQLite` · `Docker`
 
-To gain an edge, modern finance relies on **alternative data** — tracking real-world, operational activity to read a company's health before the official numbers are published. The catch is that this data is chaotic, unstructured, and scattered across millions of independent websites.
+## What it does
 
-phantom-bridge collects **holistic company news** — financials, corporate actions, leadership, legal/regulatory, operations & supply chain, products, and market/reputation — resolves each item to the target company, scores its sentiment, and structures it into a clean, queryable, time-stamped record.
+- 🔎 **One input, holistic coverage** — a company-anchored prompt library fans out across 7 news categories so you see the whole picture, not just one beat.
+- 🎯 **On-entity, not noise** — queries lead with the company and results are keyword-filtered to it, so unrelated events don't leak in.
+- 🧠 **Finance-tuned sentiment, fully local** — every story scored by a distilRoBERTa model running offline (no LLM, no API cost, no data leaving the box).
+- 📊 **Live dashboard** — analyze any company on demand, manage a watchlist, and configure everything in-app.
+- 📬 **Scheduled email digests** — a background daemon scrapes, scores, and emails a per-company report on your chosen interval.
+- 🐳 **One-command demo** — `docker compose up` brings up the dashboard and the watcher together.
+
+## Why it matters
+
+In finance, the edge — *alpha* — goes to whoever understands a company first. But the official record (earnings, filings, structured feeds) is **retrospective**: it confirms what already happened, often a quarter late. A company's real story plays out first across thousands of news sites, regulators, and press releases — fast, unstructured, and easy to miss.
+
+phantom-bridge continuously reads that live stream, resolves every item to the target company, scores its sentiment, and structures it into a clean, queryable, time-stamped record — so a shift in a company's narrative is visible **as it forms**, not after the fact.
 
 ## Pipeline
 
@@ -73,13 +84,13 @@ The API key is injected at runtime as an env var — never baked into the image 
 
 1. **Settings tab** — fill in the **Bright Data API key** (or rely on `.env`), **SMTP** host/port/username/password (e.g. `smtp.gmail.com` / `587` with a Gmail *app password*), the **From** and **recipient** email, and the **watch interval (hours)**. Save.
 2. **Watchlist tab** — add the companies to monitor.
-3. **Run it** (in its own terminal, or the compose `watcher` service):
+3. **Run it** (own terminal, or the compose `watcher` service):
    ```bash
    phantom-bridge-watch           # runs one cycle now, then repeats every N hours
    phantom-bridge-watch --once    # single cycle then exit — for cron / Task Scheduler / systemd
    ```
 
-Each cycle: for every watchlisted company it scrapes fresh news, scores anything new, and (if SMTP + a recipient are set) emails an HTML report — a per-company summary plus the top events with clickable links. Stop the loop with `Ctrl-C` (or stop the container). Restart it to pick up a changed interval. With no SMTP/recipient configured it still scrapes and scores, just logs that the report wasn't sent. You can also trigger one cycle from the dashboard's **Watchlist** tab via **▶ Run watchlist now**.
+Each cycle scrapes fresh news per company, scores anything new, and (if SMTP + a recipient are set) emails an HTML report — a per-company summary plus top events with clickable links. Stop with `Ctrl-C`; restart to pick up a changed interval. You can also trigger one cycle from the dashboard's **Watchlist** tab via **▶ Run watchlist now**.
 
 ## Sentiment scoring
 
