@@ -11,5 +11,5 @@ torch
 transformers
 pandas
 streamlit
-brightdata-sdk
+brightdata-sdk==2.3.1
 python-dotenv
